@@ -37,6 +37,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.flowOf
 
 class ChatRepositoryImpl @Inject constructor(
     private val appContext: Context,
@@ -285,5 +286,27 @@ class ChatRepositoryImpl @Inject constructor(
         }
 
         return result
+    }
+
+    private fun interactModels(question: Message, history: List<Message>): List<Message> {
+        val interactions = mutableListOf<Message>()
+
+        // Ejemplo de lógica de interacción
+        val openAIResponse = completeOpenAIChat(question, history).firstOrNull()
+        val anthropicResponse = completeAnthropicChat(question, history).firstOrNull()
+        
+        if (openAIResponse is ApiState.Success && anthropicResponse is ApiState.Success) {
+            val combinedResponse = openAIResponse.data + "\n" + anthropicResponse.data
+            interactions.add(Message(content = combinedResponse, platformType = null))
+        }
+
+        return interactions
+    }
+    
+    override suspend fun completeChatInteraction(question: Message, history: List<Message>): Flow<ApiState> {
+        val interactions = interactModels(question, history)
+        return flowOf(ApiState.Success(interactions.joinToString("\n") { it.content }))
+            .onStart { emit(ApiState.Loading) }
+            .onCompletion { emit(ApiState.Done) }
     }
 }
