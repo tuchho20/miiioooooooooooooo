@@ -1,0 +1,31 @@
+name: Kotlin Lint Check
+
+on:
+  pull_request_target:
+    branches:
+      - "main"
+    paths-ignore:
+      - ".gitignore"
+      - "**.md"
+      - "LICENSE"
+      - ".idea/**"
+      - ".github/**"
+      - ".editorconfig"
+      - "images/**"
+      - "metadata/**"
+
+jobs:
+  ktlint:
+    name: Check Kotlin Code Format
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clone repo
+        uses: actions/checkout@v4
+
+      - name: Run ktlint
+        uses: ScaCap/action-ktlint@master
+        with:
+          filter_mode: file
+          github_token: ${{ secrets.github_token }}
+          reporter: github-check
