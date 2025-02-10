@@ -26,6 +26,7 @@ class ChatViewModel @Inject constructor(
     private val chatRepository: ChatRepository,
     private val settingRepository: SettingRepository
 ) : ViewModel() {
+
     sealed class LoadingState {
         data object Idle : LoadingState()
         data object Loading : LoadingState()
@@ -295,6 +296,12 @@ class ChatViewModel @Inject constructor(
         if (ApiType.OLLAMA in enabledPlatforms) {
             completeOllamaChat()
         }
+
+        // Interacción entre modelos
+        viewModelScope.launch {
+            val interactions = interactModels(_userMessage.value, _messages.value)
+            interactions.forEach { addMessage(it) }
+        }
     }
 
     private fun completeAnthropicChat() {
@@ -453,48 +460,4 @@ class ChatViewModel @Inject constructor(
         val enabledPlatforms = enabledPlatformsInChat.toSet()
 
         if (ApiType.OPENAI in enabledPlatforms) {
-            addMessage(_openAIMessage.value)
-        }
-
-        if (ApiType.ANTHROPIC in enabledPlatforms) {
-            addMessage(_anthropicMessage.value)
-        }
-
-        if (ApiType.GOOGLE in enabledPlatforms) {
-            addMessage(_googleMessage.value)
-        }
-
-        if (ApiType.GROQ in enabledPlatforms) {
-            addMessage(_groqMessage.value)
-        }
-
-        if (ApiType.OLLAMA in enabledPlatforms) {
-            addMessage(_ollamaMessage.value)
-        }
-    }
-
-    private fun updateLoadingState(apiType: ApiType, loadingState: LoadingState) {
-        when (apiType) {
-            ApiType.OPENAI -> _openaiLoadingState.update { loadingState }
-            ApiType.ANTHROPIC -> _anthropicLoadingState.update { loadingState }
-            ApiType.GOOGLE -> _googleLoadingState.update { loadingState }
-            ApiType.GROQ -> _groqLoadingState.update { loadingState }
-            ApiType.OLLAMA -> _ollamaLoadingState.update { loadingState }
-        }
-
-        var result = true
-        enabledPlatformsInChat.forEach {
-            val state = when (it) {
-                ApiType.OPENAI -> _openaiLoadingState
-                ApiType.ANTHROPIC -> _anthropicLoadingState
-                ApiType.GOOGLE -> _googleLoadingState
-                ApiType.GROQ -> _groqLoadingState
-                ApiType.OLLAMA -> _ollamaLoadingState
-            }
-
-            result = result && (state.value is LoadingState.Idle)
-        }
-
-        _isIdle.update { result }
-    }
-}
+            addMessage(_
