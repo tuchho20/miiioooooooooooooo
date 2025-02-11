@@ -299,7 +299,7 @@ class ChatViewModel @Inject constructor(
 
         // Interacción entre modelos
         viewModelScope.launch {
-            val interactions = interactModels(_userMessage.value, _messages.value)
+            val interactions = chatRepository.interactModels(_userMessage.value, _messages.value)
             interactions.forEach { addMessage(it) }
         }
     }
@@ -460,4 +460,8 @@ class ChatViewModel @Inject constructor(
         val enabledPlatforms = enabledPlatformsInChat.toSet()
 
         if (ApiType.OPENAI in enabledPlatforms) {
-            addMessage(_
+            addMessage(_openAIMessage.value)
+        }
+
+        if (ApiType.ANTHROPIC in enabledPlatforms) {
+            addMessage(_anthropicMessage.value)
